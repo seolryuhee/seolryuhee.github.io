@@ -1,33 +1,29 @@
 ---
-title: "Github Blog 시작"
-excerpt: "md 파일 사용법 익히기"
+title:  "MD 파일 테스트"
+excerpt: "md 파일 작성 방법 테스트 중"
 
 categories:
-	- Practice
+  - Practice
 tags:
-	- [Practice, jekyll, Github, Git]
+  - [Practice, jekyll, Github, Git]
 
 toc: true
 toc_sticky: true
-
+ 
 date: 2023-09-05
 last_modified_at: 2023-09-05
 ---
 
-마크다운을 사용해보자
-==================
+# 마크 다운 테스트 중
 
-마크다운 익숙해지기
-----------------
-
+## Seolryuhee Information
 ```java
 public class Seolryuhee {
-	private String name = "seolryuhee";
+	private String name = "Seolryuhee";
 	private boolean isRealName = false;
 	
-	public void writeSomething() {
+	public void saySomething() {
 		System.out.println("Hello, Seolryuhee!");
 	}
 }
 ```
-
