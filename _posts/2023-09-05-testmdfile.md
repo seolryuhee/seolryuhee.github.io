@@ -3,9 +3,9 @@ title: "Github Blog 시작"
 excerpt: "md 파일 사용법 익히기"
 
 categories:
-	 - Practice
+	- Practice
 tags:
-	 - [Practice, jekyll, Github, Git]
+	- [Practice, jekyll, Github, Git]
 
 toc: true
 toc_sticky: true
