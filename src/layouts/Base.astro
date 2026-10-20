@@ -1,0 +1,68 @@
+---
+import '../styles/global.css';
+import 'pretendard/dist/web/variable/pretendardvariable.css';
+import { site, urlFor, absoluteUrl } from '../lib/site.mjs';
+const { title = site.title, description = site.description, noindex = false, articleDate } = Astro.props;
+const fullTitle = title === site.title ? title : `${title} · ${site.title}`;
+const canonical = noindex && !articleDate ? absoluteUrl('404.html') : new URL(Astro.url.pathname, site.origin).href;
+const links = [['전체 글', 'posts/'], ['태그', 'tags/'], ['소개', 'about/'], ['검색', 'search/']];
+---
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={urlFor('favicon.svg')} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={site.title} href={urlFor('rss.xml')} />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={fullTitle} /><meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} /><meta property="og:type" content={articleDate ? 'article' : 'website'} />
+    <meta property="og:locale" content="ko_KR" /><meta property="og:image" content={absoluteUrl('social.png')} />
+    <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="기록용 블로그 — 배운 것과 지나온 날들" />
+    <meta name="twitter:card" content="summary_large_image" /><meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} /><meta name="twitter:image" content={absoluteUrl('social.png')} />
+    {articleDate && <meta property="article:published_time" content={`${articleDate}T00:00:00+09:00`} />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <title>{fullTitle}</title>
+    <script is:inline>
+      (() => {
+        document.documentElement.classList.add('js');
+        let saved; try { saved = localStorage.getItem('theme'); } catch {}
+        document.documentElement.dataset.theme = saved === 'dark' || saved === 'light' ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <header class="site-header" data-pagefind-ignore>
+      <a class="brand" href={urlFor()}><span class="brand-mark" aria-hidden="true">기</span>기록용 블로그</a>
+      <div class="header-actions"><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">메뉴</button>
+      <nav id="site-nav" aria-label="주 메뉴">{links.map(([label, path]) => <a href={urlFor(path)} aria-current={Astro.url.pathname.startsWith(urlFor(path)) ? 'page' : undefined}>{label}</a>)}</nav>
+      <button class="theme-toggle" type="button" aria-label="화면 테마 전환">◐</button></div>
+    </header>
+    <main id="main" tabindex="-1"><slot /></main>
+    <footer class="site-footer" data-pagefind-ignore><span>기록용 블로그</span><div><span>배운 것과 지나온 날들.</span><a href={urlFor('rss.xml')}>RSS</a></div></footer>
+    <script>
+      const button = document.querySelector<HTMLButtonElement>('.theme-toggle');
+      const menu = document.querySelector<HTMLButtonElement>('.menu-toggle');
+      function closeMenu() { menu?.setAttribute('aria-expanded', 'false'); }
+      menu?.addEventListener('click', () => menu.setAttribute('aria-expanded', String(menu.getAttribute('aria-expanded') !== 'true')));
+      document.addEventListener('keydown', event => { if (event.key === 'Escape' && menu?.getAttribute('aria-expanded') === 'true') { closeMenu(); menu.focus(); } });
+      document.addEventListener('click', event => { if (event.target instanceof Node && !document.querySelector('.header-actions')?.contains(event.target)) closeMenu(); });
+      function labelTheme() { button?.setAttribute('aria-label', document.documentElement.dataset.theme === 'dark' ? '밝은 화면으로 전환' : '어두운 화면으로 전환'); }
+      labelTheme();
+      button?.addEventListener('click', () => {
+        const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem('theme', theme); } catch {}
+        labelTheme();
+      });
+      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+        let saved; try { saved = localStorage.getItem('theme'); } catch {}
+        if (!saved) { document.documentElement.dataset.theme = event.matches ? 'dark' : 'light'; labelTheme(); }
+      });
+    </script>
+  </body>
+</html>

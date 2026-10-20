@@ -1,0 +1,51 @@
+name: Prepare or deploy Pages
+
+# No push or pull_request trigger: publishing requires a separate explicit request.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish only after explicit public-deployment approval and Pages setup'
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Validate content, build HTML, index search, validate final artifact
+        run: npm run build
+      - name: Upload the exact verified artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    if: ${{ inputs.publish && github.ref == 'refs/heads/main' }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the previously verified artifact
+        id: deployment
+        uses: actions/deploy-pages@v5

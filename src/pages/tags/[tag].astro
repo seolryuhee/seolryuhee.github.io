@@ -1,0 +1,15 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../../components/PostList.astro';
+import { visiblePosts, tagsFor } from '../../lib/posts';
+import { urlFor, tagKey } from '../../lib/site.mjs';
+export async function getStaticPaths() {
+  const posts = await visiblePosts();
+  return tagsFor(posts).map(tag => ({ params: { tag: tagKey(tag) }, props: { tag, posts: posts.filter(post => post.data.tags.includes(tag)) } }));
+}
+const { tag, posts } = Astro.props;
+---
+<Base title={`${tag} 태그`} description={`${tag}에 관한 기록입니다.`}><section class="page-shell">
+  <header class="page-heading"><a class="back-link" href={urlFor('tags/')}>← 모든 태그</a><h1>{tag}</h1><p>{posts.length}개의 기록</p></header>
+  <PostList posts={posts} />
+</section></Base>

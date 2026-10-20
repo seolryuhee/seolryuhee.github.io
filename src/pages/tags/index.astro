@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import { visiblePosts, tagsFor } from '../../lib/posts';
+import { tagPath } from '../../lib/site.mjs';
+const posts = await visiblePosts();
+const tags = tagsFor(posts);
+---
+<Base title="태그" description="관심 있는 주제로 기록을 찾아보세요."><section class="page-shell">
+  <header class="page-heading"><p class="eyebrow">BY TOPIC</p><h1>태그</h1><p>관심 있는 주제로 찾아보세요.</p></header>
+  {tags.length ? <ul class="tag-cloud">{tags.map(tag => <li><a href={tagPath(tag)}>{tag}<span>{posts.filter(post => post.data.tags.includes(tag)).length}</span></a></li>)}</ul> : <div class="empty-state"><h2>아직 게시된 글이 없습니다.</h2><p>글이 쌓이면 주제별로 모아 보여 드립니다.</p></div>}
+</section></Base>

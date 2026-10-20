@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+import { publicPosts } from '../lib/posts';
+import { urlFor } from '../lib/site.mjs';
+const count = (await publicPosts()).length;
+---
+<Base title="검색" description="공개된 기록의 제목과 요약, 본문을 검색합니다."><section class="page-shell">
+  <header class="page-heading"><p class="eyebrow">FIND A NOTE</p><h1>기록 찾기</h1><p>제목과 요약, 본문에서 찾아봅니다.</p></header>
+  <form id="search-form" role="search" data-index-url={urlFor('pagefind/pagefind.js')} data-base-url={urlFor()} data-count={count} data-dev={import.meta.env.DEV ? 'true' : 'false'}>
+    <label for="search-input">검색어</label><div class="search-field"><input id="search-input" type="search" name="q" autocomplete="off" placeholder="궁금한 단어나 코드 이름" /><button type="submit">찾기</button></div>
+  </form>
+  <p id="search-status" role="status" class="search-status">{count === 0 ? '아직 게시된 글이 없습니다.' : '검색어를 입력해 주세요.'}</p>
+  {import.meta.env.DEV && <p class="preview-note">검색은 최종 빌드의 정적 미리보기에서 사용할 수 있습니다. 초안은 검색하지 않습니다.</p>}
+  <noscript><p>검색을 사용하려면 JavaScript를 켜 주세요. 전체 글과 태그 탐색은 JavaScript 없이도 사용할 수 있습니다.</p></noscript>
+  <ol id="search-results" class="search-results" aria-label="검색 결과"></ol>
+</section></Base>
+<script is:inline type="module" src={urlFor('scripts/search.js')}></script>

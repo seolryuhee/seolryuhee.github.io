@@ -1,0 +1,44 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { visiblePosts, formatDate } from '../../lib/posts';
+import { urlFor, tagPath } from '../../lib/site.mjs';
+export async function getStaticPaths() {
+  return (await visiblePosts()).map(post => ({ params: { slug: post.data.slug }, props: { post } }));
+}
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const toc = headings.filter(h => h.depth === 2 || h.depth === 3);
+---
+<Base title={post.data.title} description={post.data.summary} articleDate={post.data.date} noindex={post.data.draft}>
+  <div class="article-shell">
+    <article class="article-content" data-pagefind-body>
+      {post.data.draft && <aside class="draft-notice" data-pagefind-ignore>로컬 검토용 초안입니다. 공개 빌드에는 포함되지 않습니다.</aside>}
+      <header class="article-header">
+        <div class="post-meta" data-pagefind-ignore><time datetime={post.data.date}>{formatDate(post.data.date)}</time><span>{post.data.tags.map(tag => <a href={tagPath(tag)}>{tag}</a>)}</span></div>
+        <h1 data-pagefind-meta="title">{post.data.title}</h1>
+        <p class="article-summary" data-pagefind-meta="description">{post.data.summary}</p>
+      </header>
+      {toc.length > 0 && <details class="mobile-toc" data-pagefind-ignore><summary>이 글의 목차</summary><nav aria-label="글 목차">{toc.map(h => <a class:list={{ nested: h.depth === 3 }} href={`#${h.slug}`}>{h.text}</a>)}</nav></details>}
+      <div class="prose"><Content /></div>
+      <div class="article-end" data-pagefind-ignore><span aria-hidden="true">✳</span><a href={urlFor('posts/')}>← 전체 글로 돌아가기</a></div>
+    </article>
+    {toc.length > 0 && <aside class="desktop-toc" data-pagefind-ignore><nav aria-label="글 목차"><p>이 글의 목차</p>{toc.map(h => <a class:list={{ nested: h.depth === 3 }} href={`#${h.slug}`}>{h.text}</a>)}</nav></aside>}
+  </div>
+  <script>
+    document.querySelectorAll<HTMLPreElement>('.prose pre').forEach(pre => {
+      pre.tabIndex = 0; pre.setAttribute('aria-label', '코드: 가로로 스크롤할 수 있습니다');
+      const wrapper = document.createElement('div'); wrapper.className = 'code-container'; pre.before(wrapper); wrapper.append(pre);
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'copy-code'; button.textContent = '복사'; button.setAttribute('aria-label', '코드 복사'); button.setAttribute('data-pagefind-ignore', '');
+      const status = document.createElement('span'); status.className = 'sr-only'; status.setAttribute('role', 'status'); status.setAttribute('data-pagefind-ignore', ''); wrapper.append(button, status);
+      button.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(pre.querySelector('code')?.textContent || ''); button.textContent = '복사됨'; status.textContent = '코드를 복사했습니다.'; }
+        catch { button.textContent = '복사 실패'; status.textContent = '복사하지 못했습니다. 코드를 직접 선택해 주세요.'; }
+        setTimeout(() => { button.textContent = '복사'; }, 2000);
+      });
+    });
+    document.querySelectorAll<HTMLTableElement>('.prose table').forEach(table => {
+      const wrapper = document.createElement('div'); wrapper.className = 'table-scroll'; wrapper.tabIndex = 0; wrapper.setAttribute('role', 'region'); wrapper.setAttribute('aria-label', '표: 가로로 스크롤할 수 있습니다'); table.before(wrapper); wrapper.append(table);
+    });
+  </script>
+</Base>
