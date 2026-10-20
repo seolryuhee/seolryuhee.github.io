@@ -120,20 +120,32 @@ Remove-Item Env:BLOG_BASE
 npm run build
 ```
 
-## 배포 설정 준비와 실제 게시
+## 공개 배포와 이후 게시
 
-현재 원격 Pages는 **main 브랜치, 루트(`/`), legacy Jekyll 게시**입니다(2026-10-20 API로 읽기 확인). 로컬 작업 브랜치는 `codex/blog-redesign`입니다. **별도 공개 요청 전에는 어떤 브랜치에도 push하지 않고 main 반영·Pages 설정 변경·배포 실행을 하지 않습니다.** 새 수동 워크플로만으로 기존 자동 게시 경로가 통제되었다고 판단하지 않습니다.
+공개 주소는 https://seolryuhee.github.io/ 입니다. 2026-10-20 사용자의 공개 요청 후, 기존 main/루트의 legacy 게시를 **GitHub Actions 게시로 전환**하고 공개 배포와 실제 사이트 검증을 완료했습니다. 전환 직후 기존 사이트의 HTTP 200과 HTML 해시 유지도 확인했습니다.
 
-`.github/workflows/pages.yml`은 수동 실행만 지원하며 `publish` 기본값은 false입니다. 로컬과 같은 `npm ci`/`npm run build` 후 **검증한 동일 dist**를 Pages artifact로 업로드합니다. publish가 true이고 main에서 실행한 경우에만 배포 job이 실행되도록 준비했습니다. 로컬에서 워크플로 구조를 검사했으며 GitHub 실행은 하지 않았습니다.
+최초 공개 실행: [GitHub Actions 39404290240](https://github.com/seolryuhee/seolryuhee.github.io/actions/runs/39404290240). 업로드 artifact의 26개 파일과 공개 파일의 SHA-256이 모두 일치했습니다. 공개 글은 0개, 두 샘플은 draft:true입니다. 실제 사이트의 빈 목록·검색, 샘플 주소 404, RSS/사이트맵, 공유 이미지, 모바일 메뉴·화면을 확인했습니다. 공개 글 양성 검색과 본문 이미지는 별도 로컬 통합 검증 결과이며, 샘플을 공개해서 검사하지 않았습니다.
 
-공개 요청을 받으면 다음 순서로 진행합니다.
+워크플로 .github/workflows/pages.yml은 **수동 실행만** 지원합니다. publish 기본값은 false이며, true이고 main에서 실행했을 때만 deploy job이 동작합니다. 자동 push 배포는 켜지 않았습니다.
 
-1. 원격 게시 경로·설정을 재확인하고 로컬 최종 검증을 다시 수행합니다.
-2. **main에 변경을 반영하기 전에** Pages Source를 GitHub Actions로 전환하여 기존 브랜치 자동 게시를 중단합니다. 기존 공개 사이트가 새 배포 전까지 유지되는지 확인합니다. 전환할 수 없으면 원격 반영을 중단합니다.
-3. 승인된 변경을 main에 반영하고 수동 워크플로의 publish:true로 검증·업로드·배포합니다. 다시 빌드한 별도 결과물을 배포하지 않습니다.
-4. 실제 공개 주소에서 링크·이미지·검색·RSS·사이트맵·상세 직접 접속을 확인합니다. 자동 배포 전환은 별도 공개 단계에서만 수행합니다.
+이후 글 게시 순서:
 
-상태는 **로컬 검증 완료 / 배포 설정 준비 완료 / 공개 사이트 확인 완료**로 나누어 보고합니다. 지금은 원격 반영과 실제 공개 배포를 수행하지 않습니다.
+1. Markdown/MDX를 작성하고 로컬에서 검토합니다. 공개할 글만 draft:false로 지정합니다.
+2. npm test와 npm run build를 통과시키고 정적 미리보기에서 확인합니다.
+3. 변경을 커밋해 원격 main에 반영합니다. 강제 push나 이전 이력 삭제는 필요하지 않습니다.
+4. 아래 수동 워크플로를 실행하거나 Actions 화면에서 publish를 true로 지정합니다. 단순 push만으로는 사이트가 바뀌지 않습니다.
+
+```sh
+gh workflow run pages.yml --ref main -f publish=true
+```
+
+CI는 npm ci → 단위 검증 → 공통 최종 빌드(콘텐츠 검증 → Astro → Pagefind → 결과물 검증) → 동일 dist 업로드 → 게시 순서입니다. 빌드와 검증 실패 시 업로드/배포하지 않습니다. Pages Source는 Actions로 유지하세요. 자동 배포 전환은 별도 요청 시에만 수행합니다.
+
+공개 검증은 scripts/verify-live.mjs로 재실행할 수 있습니다. 해당 실행의 github-pages artifact를 내려받아 artifact.tar를 로컬 폴더에 풀고, DEPLOY_ARTIFACT_DIR을 그 폴더로 지정한 뒤 npm run verify:live를 실행합니다. GitHub에서 생성한 실제 artifact와 비교해야 하며, 로컬에서 새로 빌드한 다른 결과물로 대체하지 않습니다. 필요하면 BROWSER_EXECUTABLE에 설치된 Chrome 경로를 지정합니다.
+
+검증 기록은 .local/deployment/live-report.json, Actions 로그와 공개 스크린샷에 생성하며 Git에서 제외합니다. 구현·공개 결과 요약은 [계획 문서](docs/PLAN.md)에 유지합니다.
+
+현재 상태: **로컬 검증 완료 / 배포 설정 및 CI 실행 확인 완료 / 공개 사이트 확인 완료**.
 
 ## 유지보수
 
