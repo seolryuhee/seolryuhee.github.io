@@ -13,7 +13,7 @@ await mkdir(output, { recursive: true });
 const artifact = path.resolve(process.env.DEPLOY_ARTIFACT_DIR || 'dist');
 const posts = await readPosts();
 const published = posts.filter(post => !post.data.draft);
-const report = { site: absoluteUrl(), artifact, checkedAt: new Date().toISOString(), files: [], pages: [], browser: [], errors: [] };
+const report = { site: absoluteUrl(), artifact, commit: process.env.DEPLOY_COMMIT || null, checkedAt: new Date().toISOString(), files: [], pages: [], browser: [], search: [], errors: [] };
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 async function get(url) {
   const request = new URL(url);
@@ -56,7 +56,7 @@ try {
     report.pages.push({ path: `posts/${post.data.slug}/`, status: 404 });
   }
   const checkedLinks = new Set();
-  for (const route of ['', 'posts/', 'tags/', 'about/', 'search/']) {
+  for (const route of ['', 'posts/', 'tags/', 'about/', 'search/', ...published.map(post => `posts/${post.data.slug}/`)]) {
     const response = await get(absoluteUrl(route));
     assert.equal(response.status, 200);
     const $ = load(await response.text());
@@ -73,7 +73,7 @@ try {
     report.pages.push({ path: route, status: response.status });
   }
   browser = await chromium.launch(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {});
-  for (const [width, theme] of [[1440, 'light'], [390, 'dark']]) {
+  for (const width of [1440, 390, 320]) for (const theme of ['light', 'dark']) {
     const context = await browser.newContext({ viewport: { width, height: 1000 }, colorScheme: theme, extraHTTPHeaders: { 'Cache-Control': 'no-cache' } });
     const page = await context.newPage();
     page.on('pageerror', error => report.errors.push(error.message));
@@ -83,13 +83,66 @@ try {
       await page.evaluate(() => document.fonts.ready);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       if (published.length === 0 && route === 'posts/') assert.equal(await page.locator('.post-row').count(), 0);
+      assert.equal(await page.locator('.brand-title').textContent(), site.title);
+      assert.equal(await page.locator('.brand-mark svg').count(), 1);
+      assert.equal(await page.locator('.site-footer > span').textContent(), site.title);
+      assert.equal(await page.locator('.site-footer > a').textContent(), 'RSS');
     }
+    for (const post of published) {
+      assert.equal((await page.goto(absoluteUrl(`posts/${post.data.slug}/`))).status(), 200);
+      assert.equal((await page.reload()).status(), 200);
+      assert.equal(await page.locator('.article-header h1').textContent(), post.data.title);
+      assert.equal(await page.locator('.article-summary').textContent(), post.data.summary);
+      assert.equal(await page.locator('.draft-notice').count(), 0);
+      assert.equal(await page.locator('meta[name=robots]').count(), 0);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      for (const toc of [width <= 900 ? '.mobile-toc' : '.desktop-toc']) {
+        if (await page.locator(`${toc} a`).count()) {
+          if (width <= 900) await page.locator(`${toc} summary`).click();
+          await page.locator(`${toc} a`).first().click();
+          const fragment = new URL(page.url()).hash.slice(1);
+          assert.ok(await page.evaluate(id => Boolean(document.getElementById(decodeURIComponent(id))), fragment));
+        }
+      }
+      if (post.data.slug === 'korean-ime-fix-mod') {
+        assert.deepEqual(await page.locator('.prose h2').allTextContents(), ['1. 문제 발견', '2. 기존 해결 방법 조사', '3. 기존 해결 방법 적용 실패', '4. 문제 분석 및 재정의', '5. 해결 방안 설계', '6. AI를 활용한 모드 구현', '7. 적용 결과 및 결론']);
+        assert.equal(await page.getByRole('link', { name: 'Korean IME Fix Mod (Steam 창작마당)', exact: true }).getAttribute('href'), 'https://steamcommunity.com/sharedfiles/filedetails/?id=3660423434');
+      }
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({ path: path.join(output, `live-${post.data.slug}-${width}-${theme}.png`), fullPage: true });
+    }
+    await page.goto(absoluteUrl('search/'));
     if (published.length === 0) {
       for (const query of ['없는검색어123', 'Optional', '산책']) {
         await page.locator('#search-input').fill(query);
         await page.getByRole('button', { name: '찾기', exact: true }).click();
         assert.match(await page.getByRole('status').textContent(), /아직 게시된 글이 없습니다/);
         assert.equal(await page.locator('#search-results li').count(), 0);
+      }
+    } else {
+      const firstRecord = published.find(post => post.data.slug === 'korean-ime-fix-mod');
+      const cases = [
+        ...(firstRecord ? ['한영키', '해결기', '히라가나', 'Korean IME Fix Mod'].map(query => ({ query, includes: firstRecord.data.slug })) : published.map(post => ({ query: post.data.title, includes: post.data.slug }))),
+        ...['없는검색어123', 'Optional', '산책'].map(query => ({ query, empty: true })),
+      ];
+      for (const test of cases) {
+        await page.locator('#search-input').fill(test.query);
+        await page.getByRole('button', { name: '찾기', exact: true }).click();
+        await page.waitForFunction(() => /개의 기록을 찾았습니다|일치하는 글이 없습니다|검색을 불러오지 못했습니다/.test(document.querySelector('#search-status').textContent));
+        assert.doesNotMatch(await page.getByRole('status').textContent(), /불러오지 못/);
+        const actual = await page.locator('#search-results a').evaluateAll(links => links.map(link => link.pathname.split('/').filter(Boolean).at(-1)).sort());
+        if (test.empty) assert.deepEqual(actual, [], test.query);
+        else assert.ok(actual.includes(test.includes), `${test.query}: ${JSON.stringify(actual)}`);
+        report.search.push({ width, theme, query: test.query, expected: test.empty ? [] : { includes: test.includes }, actual });
+        if (test.includes && published.length === 1) assert.deepEqual(actual, [test.includes]);
+        if (test.includes) {
+          if (test.query === '한영키') await page.screenshot({ path: path.join(output, `live-positive-search-${width}-${theme}.png`), fullPage: true });
+          await page.locator(`#search-results a[href="${urlFor(`posts/${test.includes}/`)}"]`).click();
+          assert.equal(new URL(page.url()).pathname, urlFor(`posts/${test.includes}/`));
+          assert.equal((await page.reload()).status(), 200);
+          assert.equal(await page.locator('h1').textContent(), published.find(post => post.data.slug === test.includes).data.title);
+          await page.goto(absoluteUrl('search/'));
+        }
       }
     }
     const moduleUrl = urlFor('pagefind/pagefind.js');
@@ -99,12 +152,15 @@ try {
       return { width: image.naturalWidth, height: image.naturalHeight };
     }, absoluteUrl('social.png'));
     assert.deepEqual(images, { width: 1200, height: 630 });
-    if (width === 390) {
+    if (width <= 600) {
       await page.locator('.menu-toggle').focus(); await page.keyboard.press('Enter');
       assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'), 'true');
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'), 'false');
     }
+    await page.locator('.theme-toggle').click(); await page.reload();
+    assert.equal(await page.locator('html').getAttribute('data-theme'), theme === 'dark' ? 'light' : 'dark');
+    await page.locator('.theme-toggle').click();
     await page.screenshot({ path: path.join(output, `live-search-${width}-${theme}.png`), fullPage: true });
     await page.goto(absoluteUrl());
     await page.screenshot({ path: path.join(output, `live-home-${width}-${theme}.png`), fullPage: true });

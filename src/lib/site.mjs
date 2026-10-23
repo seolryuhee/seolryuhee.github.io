@@ -1,5 +1,5 @@
 export const site = {
-  title: '기록용 블로그',
+  title: '배운 것과 지나온 날들',
   description: '배운 것과 지나온 날들을 천천히 기록합니다.',
   origin: 'https://seolryuhee.github.io',
 };

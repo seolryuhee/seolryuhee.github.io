@@ -1,8 +1,10 @@
-# 기록용 블로그
+# 배운 것과 지나온 날들
 
 Astro로 만드는 정적 개인 블로그입니다. Markdown과 필요한 글의 MDX를 사용하며, 공개 사이트는 GitHub Pages에서 실행할 수 있습니다. 별도 서버·DB·댓글·시각 편집기는 사용하지 않습니다.
 
-설계와 실제 진행 상태는 [docs/PLAN.md](docs/PLAN.md)에 정리합니다. 현재 공개 글은 **0개**이며 두 샘플은 계속 초안입니다. 현재 디자인은 2026-10-20 사용자 검토를 통해 채택했습니다.
+설계와 실제 진행 상태는 [docs/PLAN.md](docs/PLAN.md)에 정리합니다. 현재 빌드의 공개 글은 **1개**이며 두 샘플은 계속 초안입니다. 첫 기록 **‘한영키를 누르기 싫어서 모드를 만들었습니다’**는 2026-10-23 사용자가 확정한 최종 원고와 7개 소제목, Steam 창작마당 링크를 반영해 `draft: false`로 지정했습니다. 기본 디자인은 2026-10-20 채택했으며 사이트 이름·책 아이콘·푸터는 2026-10-23 검토를 반영했습니다.
+
+사이트 이름은 **‘배운 것과 지나온 날들’**입니다. 사용자가 첫 기록과 이번 전체 변경의 커밋·push·운영 배포를 승인했습니다. 게시 주소는 [첫 기록](https://seolryuhee.github.io/posts/korean-ime-fix-mod/), [검색](https://seolryuhee.github.io/search/)이며 로컬 작성 화면은 [개발 서버](http://127.0.0.1:4321/posts/korean-ime-fix-mod/)에서 확인합니다. push 후 별도 수동 배포가 필요하며, 해당 Actions 실행과 실제 공개 검증 결과를 함께 확인해야 게시 완료입니다.
 
 ## 글 작성부터 공개 게시까지
 
@@ -15,7 +17,7 @@ Astro로 만드는 정적 개인 블로그입니다. Markdown과 필요한 글�
 현재 작업이 `codex/blog-redesign` 브랜치라면 main으로 옮겨 원격과 동기화한 뒤 새 글을 작성합니다. `git status`에 수정 사항이 있으면 먼저 보존하고 진행하세요. 특히 로컬 main이 이전 상태일 수 있으므로 `pull --ff-only`를 생략하지 마세요.
 
 ```powershell
-Set-Location C:\Project\Java\seolryuhee.github.io
+Set-Location E:\ai\seolryuhee.github.io
 
 git status
 git switch main
@@ -24,19 +26,26 @@ git pull --ff-only origin main
 if ($LASTEXITCODE -ne 0) { throw 'main 동기화 실패: 다음 단계로 진행하지 마세요.' }
 ```
 
-현재 PC의 시스템 Node는 22.17.1이고 프로젝트 최소 버전은 22.19입니다. 이미 준비한 로컬 **Node 22.23.3**으로 npm을 실행하면 시스템 Node를 변경할 필요가 없습니다.
+현재 PC의 시스템 Node는 20.11.1이고 프로젝트 최소 버전은 22.19.0입니다. 프로젝트 전용 **Node 22.23.3**을 `.local/runtime/node-v22.23.3-win-x64`에 설치했습니다. Node 공식 Windows x64 ZIP의 SHA-256을 공식 `SHASUMS256.txt`와 대조했으며, 시스템 Node와 nvm 기본 버전은 변경하지 않습니다. npm도 이 로컬 런타임에 포함된 것을 사용합니다.
+
+새 PowerShell 창을 열 때마다 아래 실행 환경을 먼저 설정하세요. 이미 의존성을 설치했고 `package-lock.json`이 바뀌지 않았다면 `ci`는 생략할 수 있습니다. 이 설정은 현재 PowerShell 세션에만 적용됩니다.
 
 ```powershell
-$nodeExe = (Resolve-Path '.local/runtime/node_modules/node/bin/node.exe').Path
-$npmCli = 'C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js'
-$env:Path = (Split-Path $nodeExe) + ';' + $env:Path
+Set-Location E:\ai\seolryuhee.github.io
+$nodeVersion = (Get-Content .node-version -Raw).Trim()
+$runtimeDir = (Resolve-Path ".local/runtime/node-v$nodeVersion-win-x64").Path
+$nodeExe = Join-Path $runtimeDir 'node.exe'
+$npmCli = Join-Path $runtimeDir 'node_modules/npm/bin/npm-cli.js'
+$env:Path = $runtimeDir + ';' + (($env:Path -split ';' | Where-Object { $_ -ne $runtimeDir }) -join ';')
+$env:BROWSER_EXECUTABLE = 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
 
 & $nodeExe --version
+& $nodeExe $npmCli --version
 & $nodeExe $npmCli ci
 if ($LASTEXITCODE -ne 0) { throw '의존성 설치 실패' }
 ```
 
-이 로컬 런타임은 Git에 포함되지 않습니다. 다른 PC에서는 `.node-version`의 Node 22.23.3과 npm을 준비한 뒤 일반 `npm ci`, `npm run ...` 명령을 사용하세요. GitHub CLI의 `gh` 명령은 현재 PC에 설치·인증되어 있습니다. 다른 PC에서는 먼저 `gh auth login`으로 본인 계정에 로그인해야 합니다.
+이 로컬 런타임과 `node_modules`는 Git에 포함되지 않습니다. 다른 PC에서는 `.node-version`의 Node 22.23.3과 npm을 준비한 뒤 일반 `npm ci`, `npm run ...` 명령을 사용하세요. 별도 서버·DB·인증용 `.env` 파일은 필요하지 않습니다. 기본 사이트 경로는 `/`이므로 일반 빌드에서는 `BLOG_BASE`를 설정하지 않습니다. GitHub CLI의 `gh` 명령은 현재 PC에 설치·인증되어 있습니다. 다른 PC에서는 먼저 `gh auth login`으로 본인 계정에 로그인해야 합니다.
 
 ### 2. 새 글 작성
 
@@ -222,11 +231,11 @@ Pagefind **1.5.2**를 lockfile로 고정했습니다. Node API가 배포 패키�
 
 ```powershell
 & $nodeExe $npmCli test
-$env:BROWSER_EXECUTABLE = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+$env:BROWSER_EXECUTABLE = 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
 & $nodeExe $npmCli run test:acceptance
 ```
 
-이미 설치한 Chrome을 쓸 경우 PowerShell에서 `$env:BROWSER_EXECUTABLE='C:\Program Files\Google\Chrome\Application\chrome.exe'`를 지정할 수 있습니다. Playwright도 개발 의존성으로 고정했습니다.
+현재 PC는 1단계에서 지정한 `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`의 Chrome을 사용합니다. 다른 PC에서는 `BROWSER_EXECUTABLE`을 실제 Chrome 설치 경로에 맞추세요. Playwright도 개발 의존성으로 고정했습니다.
 
 - 단위 검증: Markdown/MDX 공통 규칙, 누락 필드·잘못된 형식, 실제 날짜, 중복 주소, 폴더명, 누락 이미지·대체 텍스트·MDX import/문법.
 - 통합 검증: `.local/build-acceptance`에 소스와 의존성을 복사하고 임시 글을 생성하여 같은 최종 빌드를 실행합니다. 실제 글 폴더나 샘플의 draft 값을 변경하지 않습니다. 별도 서버/저장소를 사용하는 기능이 아니라 로컬 테스트용 정적 서버입니다.
@@ -264,7 +273,7 @@ CI는 npm ci → 단위 검증 → 공통 최종 빌드(콘텐츠 검증 → Ast
 
 검증 기록은 .local/deployment/live-report.json, Actions 로그와 공개 스크린샷에 생성하며 Git에서 제외합니다. 구현·공개 결과 요약은 [계획 문서](docs/PLAN.md)에 유지합니다.
 
-현재 상태: **로컬 검증 완료 / 배포 설정 및 CI 실행 확인 완료 / 공개 사이트 확인 완료**.
+2026-10-20의 최초 공개 배포 기록은 위에 보존합니다. 2026-10-23 최종 원고와 사이트 이름·디자인 변경은 **사용자 공개 승인 완료** 상태이며, 빌드 공개 대상 1개·샘플 초안 2개입니다. 이번 실행의 게시 커밋·Actions·공개 파일 해시·실제 검색 검증 결과는 `.local/deployment/live-report.json`과 최종 작업 보고에서 확인합니다. 과거 공개 글 0개 검증은 현재 첫 글의 공개 검증을 대신하지 않습니다.
 
 ## 유지보수
 

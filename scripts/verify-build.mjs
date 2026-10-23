@@ -5,7 +5,8 @@ import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { chromium } from 'playwright';
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+import { readPosts } from './lib/content.mjs';
 
 const project = process.cwd();
 const output = path.resolve('.local/final-review');
@@ -14,6 +15,11 @@ const workspace = path.resolve('.local/build-acceptance');
 await mkdir(workspace, { recursive: true });
 for (const name of ['src', 'public', 'scripts']) await rm(path.join(workspace, name), { recursive: true, force: true });
 for (const name of ['src', 'public', 'scripts', 'astro.config.mjs', 'tsconfig.json', 'package.json', 'package-lock.json']) await cp(name, path.join(workspace, name), { recursive: true });
+// A zero-public baseline belongs to the fixture copy, regardless of real posts.
+// Never change the publication state of the author's actual content.
+for (const post of await readPosts(workspace)) {
+  await writeFile(post.file, `---\n${stringifyYaml({ ...post.data, draft: true }, { defaultStringType: 'QUOTE_DOUBLE' })}---\n${post.body}`);
+}
 // Vite resolves real dependency paths; a Windows junction outside this root can
 // accidentally transform Astro's own runtime. Use an independent physical copy.
 const dependencyLock = await readFile('package-lock.json', 'utf8');
