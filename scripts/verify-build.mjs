@@ -48,7 +48,10 @@ async function build(name, { fail = false, pattern, base = '/' } = {}) {
     assert.notEqual(result.code, 0, `${name}: expected failure`);
     if (pattern) assert.match(result.log, pattern);
     assert.equal(await stat(path.join(workspace, 'dist')).then(() => true).catch(() => false), false, '실패한 빌드의 dist가 남음');
-  } else assert.equal(result.code, 0, result.log);
+  } else {
+    assert.equal(result.code, 0, result.log);
+    assert.doesNotMatch(result.log, /use astro:head-inject/, `${name}: 오래된 MDX 지시문 경고가 재발함`);
+  }
   passed(name);
 }
 async function serve(base = '/') {
@@ -71,7 +74,7 @@ async function serve(base = '/') {
 }
 const fixtures = [
   { slug: 'verify-note', title: '별빛제목 Java 기록', summary: '연두요약 — 프로그래밍을 천천히 익히는 기록.', tags: ['한국어 검증', '노을태그전용', 'Java'], extension: 'md', body: '호수본문 트랜잭션 findPublishedPost\n\n## 내용 살펴보기\n\n```java\npublic Post findPublishedPost(String slug) {\n    return repository.findPublishedPost(slug);\n}\nString longLine = "긴 코드 확인을 위한 문장입니다. '.concat('아주 긴 코드 줄입니다. '.repeat(25), '";\n```\n\n| 비교 | 입력 | 결과 | 조건 | 검증 |\n| --- | --- | --- | --- | --- |\n| 선택 | 긴 입력 문자열 | 예상 결과 | 처리할 조건 | 확인 내용 |\n\n![검증용 노트 그림](./diagram.svg)') },
-  { slug: 'verify-csharp', title: 'C# 은하노트', summary: 'C# 식별자와 MDX 이미지 확인.', tags: ['한국어 검증', '언어', 'C#'], extension: 'mdx', body: '## 본문\n\n은하본문 C#\n\n![MDX 이미지](./diagram.svg)' },
+  { slug: 'verify-csharp', title: 'C# 은하노트', summary: 'C# 식별자와 MDX 이미지 확인.', tags: ['한국어 검증', '언어', 'C#'], extension: 'mdx', body: 'import "./article.css";\n\n## 본문\n\n은하본문 C#\n\n<div className="mdx-propagation-marker">MDX 스타일 전파 확인</div>\n\n![MDX 이미지](./diagram.svg)' },
   { slug: 'verify-cpp', title: 'C++ 바다노트', summary: 'C++ 식별자를 구별합니다.', tags: ['언어', 'C++'], extension: 'md', body: '## 본문\n\n바다본문 C++' },
   { slug: 'verify-draft', title: '비공개별무리', summary: '숨은요약은 공개되지 않습니다.', tags: ['초안전용'], extension: 'mdx', draft: true, body: '숨은본문은 공개되지 않습니다.' },
 ];
@@ -81,6 +84,7 @@ async function addFixture(post) {
   const data = { title: post.title, summary: post.summary, slug: post.slug, date: '2026-10-20', draft: post.draft || false, tags: post.tags };
   await writeFile(path.join(folder, `index.${post.extension}`), `---\n${Object.entries(data).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n\n${post.body}\n`);
   await cp(path.join(project, 'src/content/posts/sample-programming/notebook.svg'), path.join(folder, 'diagram.svg'));
+  if (post.slug === 'verify-csharp') await writeFile(path.join(folder, 'article.css'), '.mdx-propagation-marker{color:rgb(21,87,55)}');
 }
 try {
   // Validate deployment control locally, without calling Actions or changing Pages.
@@ -148,6 +152,7 @@ try {
       assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${route} overflow at ${width}`);
       assert.equal(await p.locator('html').getAttribute('lang'), 'ko');
     }
+    assert.equal(await p.locator('.mdx-propagation-marker').evaluate(el => getComputedStyle(el).color), 'rgb(21, 87, 55)', 'MDX에서 import한 CSS가 전달되지 않음');
     await p.goto(origin + 'tags/');
     await p.getByRole('link', { name: /^한국어 검증/ }).click();
     assert.equal(await p.locator('.post-row').count(), 2);

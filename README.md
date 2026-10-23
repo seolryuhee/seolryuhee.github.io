@@ -1,282 +1,82 @@
 # 배운 것과 지나온 날들
 
-Astro로 만드는 정적 개인 블로그입니다. Markdown과 필요한 글의 MDX를 사용하며, 공개 사이트는 GitHub Pages에서 실행할 수 있습니다. 별도 서버·DB·댓글·시각 편집기는 사용하지 않습니다.
+프로그래밍을 하며 배운 것과 일상에서 지나온 장면들을 남기는 개인 블로그입니다.
+문제를 해결한 과정, 코드를 읽다가 알게 된 것, 나중에 다시 꺼내 보고 싶은 생각을 천천히 기록합니다.
 
-설계와 실제 진행 상태는 [docs/PLAN.md](docs/PLAN.md)에 정리합니다. 현재 빌드의 공개 글은 **1개**이며 두 샘플은 계속 초안입니다. 첫 기록 **‘한영키를 누르기 싫어서 모드를 만들었습니다’**는 2026-10-23 사용자가 확정한 최종 원고와 7개 소제목, Steam 창작마당 링크를 반영해 `draft: false`로 지정했습니다. 기본 디자인은 2026-10-20 채택했으며 사이트 이름·책 아이콘·푸터는 2026-10-23 검토를 반영했습니다.
+**[블로그](https://seolryuhee.github.io/)** · [전체 글](https://seolryuhee.github.io/posts/) · [태그](https://seolryuhee.github.io/tags/) · [검색](https://seolryuhee.github.io/search/) · [RSS](https://seolryuhee.github.io/rss.xml)
 
-사이트 이름은 **‘배운 것과 지나온 날들’**입니다. 사용자가 첫 기록과 이번 전체 변경의 커밋·push·운영 배포를 승인했습니다. 게시 주소는 [첫 기록](https://seolryuhee.github.io/posts/korean-ime-fix-mod/), [검색](https://seolryuhee.github.io/search/)이며 로컬 작성 화면은 [개발 서버](http://127.0.0.1:4321/posts/korean-ime-fix-mod/)에서 확인합니다. push 후 별도 수동 배포가 필요하며, 해당 Actions 실행과 실제 공개 검증 결과를 함께 확인해야 게시 완료입니다.
+첫 기록은 [한영키를 누르기 싫어서 모드를 만들었습니다](https://seolryuhee.github.io/posts/korean-ime-fix-mod/)입니다. Necesse의 한글 입력 문제를 계기로 Korean IME Fix Mod를 만들게 된 이야기를 담았습니다.
 
-## 글 작성부터 공개 게시까지
+## 블로그 구성
 
-순서: **글·이미지 작성 → 작성 미리보기 → 공개 지정 → 최종 빌드·검색 확인 → 커밋·push → 수동 배포 → 실제 주소 확인**.
+Astro로 만드는 정적 사이트입니다. 글은 Markdown으로 작성하고, 컴포넌트가 필요한 글에는 MDX를 사용합니다. 제목·요약·본문 검색은 Pagefind가 맡고, 완성된 사이트는 GitHub Pages에 게시합니다.
 
-아래는 현재 PC의 PowerShell에서 사용하는 명령입니다. 각 명령에서 오류가 나면 해결한 뒤 다음 단계로 진행하세요. 서버 실행 중에는 다음 명령을 입력할 수 없으므로 확인 후 `Ctrl+C`로 종료합니다. 1단계에서 설정한 변수는 같은 PowerShell 창에서 계속 사용합니다. 새 창을 열었다면 실행 환경 변수 설정을 다시 하세요.
+태그별 글 모아보기, 목차, 코드 복사, 밝은 화면과 어두운 화면, 모바일 메뉴를 제공합니다. RSS로 새 글을 구독할 수도 있습니다. 별도 서버나 데이터베이스 없이 운영하며 광고·외부 댓글·방문자 추적은 사용하지 않습니다.
 
-### 1. 저장소와 현재 PC 실행 환경 준비
+## 로컬에서 실행하기
 
-현재 작업이 `codex/blog-redesign` 브랜치라면 main으로 옮겨 원격과 동기화한 뒤 새 글을 작성합니다. `git status`에 수정 사항이 있으면 먼저 보존하고 진행하세요. 특히 로컬 main이 이전 상태일 수 있으므로 `pull --ff-only`를 생략하지 마세요.
+[.node-version](.node-version)에 지정된 Node.js와 npm을 준비한 뒤 저장소 루트에서 실행합니다.
 
-```powershell
-Set-Location E:\ai\seolryuhee.github.io
-
-git status
-git switch main
-if ($LASTEXITCODE -ne 0) { throw '브랜치 전환 실패: 변경 사항을 확인하세요.' }
-git pull --ff-only origin main
-if ($LASTEXITCODE -ne 0) { throw 'main 동기화 실패: 다음 단계로 진행하지 마세요.' }
+```sh
+npm ci
+npm run dev -- --port 4321
 ```
 
-현재 PC의 시스템 Node는 20.11.1이고 프로젝트 최소 버전은 22.19.0입니다. 프로젝트 전용 **Node 22.23.3**을 `.local/runtime/node-v22.23.3-win-x64`에 설치했습니다. Node 공식 Windows x64 ZIP의 SHA-256을 공식 `SHASUMS256.txt`와 대조했으며, 시스템 Node와 nvm 기본 버전은 변경하지 않습니다. npm도 이 로컬 런타임에 포함된 것을 사용합니다.
+[http://127.0.0.1:4321/](http://127.0.0.1:4321/)에서 작성 중인 글을 볼 수 있습니다. 저장하면 화면에 반영되며, 개발 서버에는 초안도 표시됩니다. 검색은 아래의 정적 미리보기에서 확인합니다.
 
-새 PowerShell 창을 열 때마다 아래 실행 환경을 먼저 설정하세요. 이미 의존성을 설치했고 `package-lock.json`이 바뀌지 않았다면 `ci`는 생략할 수 있습니다. 이 설정은 현재 PowerShell 세션에만 적용됩니다.
+프로젝트 전용 Node를 사용하는 Windows 환경의 실행 방법은 [개발 안내](docs/DEVELOPMENT.md)에 정리했습니다.
 
-```powershell
-Set-Location E:\ai\seolryuhee.github.io
-$nodeVersion = (Get-Content .node-version -Raw).Trim()
-$runtimeDir = (Resolve-Path ".local/runtime/node-v$nodeVersion-win-x64").Path
-$nodeExe = Join-Path $runtimeDir 'node.exe'
-$npmCli = Join-Path $runtimeDir 'node_modules/npm/bin/npm-cli.js'
-$env:Path = $runtimeDir + ';' + (($env:Path -split ';' | Where-Object { $_ -ne $runtimeDir }) -join ';')
-$env:BROWSER_EXECUTABLE = 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
+## 글 작성하기
 
-& $nodeExe --version
-& $nodeExe $npmCli --version
-& $nodeExe $npmCli ci
-if ($LASTEXITCODE -ne 0) { throw '의존성 설치 실패' }
-```
-
-이 로컬 런타임과 `node_modules`는 Git에 포함되지 않습니다. 다른 PC에서는 `.node-version`의 Node 22.23.3과 npm을 준비한 뒤 일반 `npm ci`, `npm run ...` 명령을 사용하세요. 별도 서버·DB·인증용 `.env` 파일은 필요하지 않습니다. 기본 사이트 경로는 `/`이므로 일반 빌드에서는 `BLOG_BASE`를 설정하지 않습니다. GitHub CLI의 `gh` 명령은 현재 PC에 설치·인증되어 있습니다. 다른 PC에서는 먼저 `gh auth login`으로 본인 계정에 로그인해야 합니다.
-
-### 2. 새 글 작성
-
-일반 글은 `src/content/posts/<slug>/index.md`, 필요한 글만 `index.mdx`로 작성합니다. 사이트 코드를 바꿀 필요는 없습니다. 예시 구조는 다음과 같습니다.
+글마다 `src/content/posts/<slug>/` 폴더를 만들고 `index.md` 또는 `index.mdx`를 작성합니다. 이미지는 같은 폴더에 두고 상대 경로로 연결합니다.
 
 ```text
-src/content/posts/java-optional-notes/
+src/content/posts/my-note/
 ├── index.md
-└── optional-flow.png
+└── diagram.png
 ```
-
-```powershell
-New-Item -ItemType Directory -Force src/content/posts/java-optional-notes
-notepad src/content/posts/java-optional-notes/index.md
-```
-
-새 파일 생성 확인이 나오면 만들기를 선택하고 아래 예시를 저장합니다. 제목·날짜·요약·내용은 실제 작성할 글에 맞게 바꾸세요. 동일한 예시 폴더에 기존 글이 있다면 덮어쓰지 말고 새 slug를 정합니다.
-
-````markdown
----
-title: "Java Optional 사용법 정리"
-date: "2026-10-20"
-summary: "Optional로 값이 없는 상황을 처리하는 기본 사용법을 정리합니다."
-slug: "java-optional-notes"
-draft: true
-tags: ["프로그래밍", "Java"]
----
-
-## Optional을 사용하는 이유
-
-값이 없을 수 있다는 사실을 코드에 드러내기 위해 사용합니다.
-
-```java
-String name = Optional.ofNullable(userName)
-    .orElse("익명");
-```
-
-## 처리 흐름
-
-![값이 있으면 이름을 사용하고 없으면 익명으로 처리하는 흐름](./optional-flow.png)
-
-| 메서드 | 의미 |
-| --- | --- |
-| ofNullable | null일 수 있는 값으로 생성 |
-| orElse | 값이 없으면 기본값 사용 |
-````
-
-콘텐츠 규칙:
-
-- 필수값은 `title`, `date`, `summary`, `slug`, `draft`입니다. `tags`는 생략하면 빈 목록입니다.
-- 날짜는 따옴표로 감싼 실제 `YYYY-MM-DD` 날짜입니다. 표시·정렬 기준이며 예약 발행 기능이 아닙니다.
-- 폴더명과 slug를 일치시킵니다. slug는 영문 소문자·숫자·하이픈으로 작성하고 모든 Markdown/MDX에서 고유해야 합니다.
-- 같은 폴더에 `index.md`와 `index.mdx`를 동시에 만들지 않습니다. 두 형식의 검증·주소·초안 규칙은 같습니다.
-- 상세 주소는 `/posts/<slug>/`입니다. 제목을 수정하더라도 이미 게시한 slug는 유지하세요.
-- 태그에는 한국어·영어·공백과 C++·C# 같은 이름을 사용할 수 있습니다. 파일 경로 구분 문자와 `? % < > : " | *`는 사용하지 않습니다.
-- 다른 글은 `/posts/other-slug/`로 연결합니다. `../other/index.md` 같은 원본 파일 경로로 연결하지 않습니다.
-
-### 3. 이미지 추가
-
-이미지를 글 폴더에 복사합니다. 아래 원본 경로는 **자신의 실제 이미지 경로로 변경**하세요.
-
-```powershell
-Copy-Item `
-  -LiteralPath 'C:\Users\sagit\Pictures\optional-flow.png' `
-  -Destination 'src/content/posts/java-optional-notes/optional-flow.png'
-```
-
-본문에서는 상대 경로로 연결하고 파일명·대소문자를 맞춥니다.
 
 ```markdown
-![이미지 내용을 설명하는 문장](./optional-flow.png)
+---
+title: "배운 것을 남기는 방법"
+date: "2026-10-23"
+summary: "나중에 다시 읽을 수 있도록 생각을 정리합니다."
+slug: "my-note"
+draft: true
+tags: ["프로그래밍", "기록"]
+---
+
+글의 내용을 작성합니다.
+
+![그림을 설명하는 대체 텍스트](./diagram.png)
 ```
 
-이미지 파일을 복사한 뒤 다음 단계로 진행하세요. 누락 이미지·대체 텍스트와 MDX의 상대 import는 초안에서도 검증합니다. 외부 HTTP 이미지/링크의 원격 가용성은 빌드에서 검사하지 않으므로 재현 가능한 검증을 위해 로컬 이미지를 권장합니다.
+폴더명과 `slug`는 일치해야 하며, 글 주소는 `/posts/<slug>/`가 됩니다. 날짜는 따옴표로 감싼 실제 날짜를 사용합니다. 글을 공개할 준비가 되면 `draft: false`로 바꿉니다. 자세한 작성 규칙은 [개발 안내](docs/DEVELOPMENT.md#글과-이미지)에 있습니다.
 
-### 4. 초안 상태로 작성 미리보기
+초안은 공개 빌드의 목록·상세·검색·RSS·사이트맵에서 제외됩니다. 다만 이 저장소는 공개되어 있으므로, 커밋·push한 초안의 원본까지 비공개가 되는 것은 아닙니다.
 
-```powershell
-& $nodeExe $npmCli run validate:content
-if ($LASTEXITCODE -ne 0) { throw '콘텐츠 오류를 먼저 수정하세요.' }
-& $nodeExe $npmCli run dev -- --port 4321
+## 빌드와 정적 미리보기
+
+```sh
+npm test
+npm run build
+npm run preview -- --port 4322
 ```
 
-- [작성 미리보기 홈](http://127.0.0.1:4321/)
-- [예시 글 상세](http://127.0.0.1:4321/posts/java-optional-notes/)
+[http://127.0.0.1:4322/](http://127.0.0.1:4322/)에서 게시할 결과물을 확인합니다. `build`는 콘텐츠 검증, Astro 빌드, 검색 인덱스 생성, 링크·자산·RSS·사이트맵 검증을 순서대로 실행합니다.
 
-작성 서버는 초안도 표시합니다. 이미지·코드·복사 버튼·표·목차와 모바일 화면을 확인하세요. 수정 후 저장하면 반영됩니다. 확인 후 `Ctrl+C`로 종료합니다. 검색은 다음 단계의 최종 정적 결과물에서 확인합니다.
+검색은 공개 글의 제목·요약·본문을 대상으로 합니다. 한국어 단어 분리와 C++·C# 같은 기호를 지원하지만, 조사·어미 변형이나 여러 단어의 정확한 문구 일치를 보장하지는 않습니다.
 
-### 5. 공개 지정과 최종 정적 미리보기
+## GitHub Pages에 게시하기
 
-새 글의 `index.md`에서 해당 설정을 바꾸고 저장합니다. 기존 샘플 두 글은 `draft: true`로 유지합니다.
+변경을 검토하고 `main`에 커밋·push한 다음, GitHub Actions의 **Prepare or deploy Pages** 워크플로를 `publish: true`로 수동 실행합니다. push만으로는 사이트가 바뀌지 않습니다.
 
-```yaml
-draft: false
-```
+GitHub CLI를 사용하는 경우:
 
-```powershell
-& $nodeExe $npmCli test
-if ($LASTEXITCODE -ne 0) { throw '테스트 실패: 게시하지 마세요.' }
-& $nodeExe $npmCli run build
-if ($LASTEXITCODE -ne 0) { throw '빌드 실패: 게시하지 마세요.' }
-& $nodeExe $npmCli run preview -- --port 4322
-```
-
-- [정적 글 상세](http://127.0.0.1:4322/posts/java-optional-notes/)
-- [정적 검색](http://127.0.0.1:4322/search/)
-
-목록 반영, 이미지 표시, 상세 주소 새로고침과 `Optional` 검색을 확인합니다. **검색은 Pagefind 인덱스까지 생성된 이 정적 미리보기에서 검증합니다.** 확인 후 `Ctrl+C`로 종료하세요.
-
-공통 최종 빌드는 이전 `dist` 제거 → 콘텐츠 검증 → Astro 빌드 → Pagefind 생성 → 최종 결과물 검증 순서입니다. 정보·날짜·중복 주소·폴더 규칙·이미지·내부 링크/앵커·글꼴·메타데이터·RSS·사이트맵·검색 인덱스를 검사합니다. 실패하면 명령이 실패하고 `dist`를 제거하여 이전 결과물이 배포 대상으로 남지 않습니다.
-
-초안은 공개 상세 HTML·목록·태그·검색·RSS·사이트맵에서 제외됩니다. 공개 글이 0개인 상태도 정상이며 빈 화면·RSS·검색을 생성합니다.
-
-**공개 저장소에 push한 초안 원본은 비공개가 아닙니다.** `draft`는 사이트 게시 여부만 제어합니다. 비공개 원본은 커밋·push하지 않은 로컬 폴더에 보관하세요.
-
-### 6. 커밋·원격 반영과 수동 배포
-
-main에서 작업 중인지 확인하고 이번 글 폴더만 추가합니다. `git diff --cached --stat`에 다른 파일이 있으면 확인한 뒤 커밋하세요.
-
-```powershell
-git branch --show-current
-git status
-git add -- src/content/posts/java-optional-notes
-git diff --cached --stat
-
-git commit -m "Java Optional 사용법 글 게시"
-if ($LASTEXITCODE -ne 0) { throw '커밋 실패' }
-git push origin main
-if ($LASTEXITCODE -ne 0) { throw '원격 반영 실패: 배포하지 마세요.' }
-
+```sh
 gh workflow run pages.yml --ref main -f publish=true
-if ($LASTEXITCODE -ne 0) { throw '워크플로 실행 요청 실패' }
 ```
 
-**단순 push만으로는 공개 사이트가 바뀌지 않습니다.** main의 수동 워크플로를 `publish=true`로 실행해야 합니다. 현재 커밋에 해당하는 실행 번호를 조회하고 완료까지 확인합니다.
+워크플로는 의존성 설치와 테스트, 최종 빌드를 거친 같은 결과물을 업로드하고 배포합니다. build와 deploy가 모두 성공한 뒤 공개 주소에서 글과 검색을 확인합니다.
 
-```powershell
-$commit = git rev-parse HEAD
-$runId = gh run list `
-  --workflow pages.yml `
-  --branch main `
-  --commit $commit `
-  --event workflow_dispatch `
-  --limit 1 `
-  --json databaseId `
-  --jq '.[0].databaseId'
-
-if (-not $runId) { throw '실행 번호가 아직 없습니다. 잠시 후 위 조회 명령을 다시 실행하세요.' }
-gh run watch $runId --exit-status
-if ($LASTEXITCODE -ne 0) { throw '배포 실패: Actions 로그를 확인하세요.' }
-```
-
-build와 deploy가 모두 성공해야 게시 완료입니다. 실패 원인은 `gh run view $runId --log-failed` 또는 GitHub Actions 화면에서 확인합니다.
-
-### 7. 실제 공개 주소 확인
-
-아래 예시 글 주소는 해당 글을 게시한 뒤 생성됩니다.
-
-- [예시 글 공개 주소](https://seolryuhee.github.io/posts/java-optional-notes/)
-- [전체 글](https://seolryuhee.github.io/posts/)
-- [태그](https://seolryuhee.github.io/tags/)
-- [검색](https://seolryuhee.github.io/search/)
-- [RSS](https://seolryuhee.github.io/rss.xml)
-- [사이트맵](https://seolryuhee.github.io/sitemap.xml)
-
-목록·태그 반영, 상세 직접 접속/새로고침, 이미지, `Optional` 검색과 RSS·사이트맵 포함 여부를 확인하세요. 기존 초안 샘플은 계속 공개 목록·검색에서 제외되어야 합니다.
-
-이후 오탈자·이미지를 수정할 때도 **수정 → 빌드·확인 → 해당 변경 커밋·push → 수동 배포 → 공개 확인**을 반복합니다. GitHub Pages 게시 소스는 Actions로 유지하고 강제 push나 이력 삭제는 하지 않습니다.
-
-## 검색과 지원 범위
-
-Pagefind **1.5.2**를 lockfile로 고정했습니다. Node API가 배포 패키지의 `pagefind_extended` 실행 파일을 사용하며, 인덱스 언어는 `ko`, 사이트·상세·검색 화면은 `lang="ko"`입니다. UI는 블로그에 맞춰 한국어로 작성했습니다.
-
-공개 글의 **제목·요약·본문**만 검색합니다. 메뉴·날짜·태그 장식·접이식/옆 목차·푸터·복사 버튼은 제외합니다. 제목과 요약도 인덱싱 영역에 포함되며 검색 결과의 제목·설명으로 사용합니다. `includeCharacters: '+#'`로 C++와 C#의 기호를 보존합니다.
-
-한국어 단어 분리는 사용하지만 어간 처리는 지원하지 않습니다. 조사·어미·띄어쓰기 변형이 모두 일치한다고 보장하지 않습니다. 여러 단어의 검색에서도 정확한 문구 일치를 보장하지 않습니다(검증 중 `한국어 검증` 검색이 본문에 `검증`만 있는 글을 반환한 사례를 확인했습니다). 실제로 확인한 검색어와 결과는 `npm run test:acceptance`가 생성하는 `.local/final-review/report.json`에 기록합니다.
-
-공식 근거: [언어/extended 지원](https://pagefind.app/docs/multilingual/), [기호 보존](https://pagefind.app/docs/config-options/#include-characters), [Node API](https://pagefind.app/docs/node-api/).
-
-## 재현 가능한 검증
-
-현재 PC에서 추가 통합 검증까지 실행하려면 1단계의 실행 환경 변수를 준비한 뒤 다음을 사용합니다.
-
-```powershell
-& $nodeExe $npmCli test
-$env:BROWSER_EXECUTABLE = 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
-& $nodeExe $npmCli run test:acceptance
-```
-
-현재 PC는 1단계에서 지정한 `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`의 Chrome을 사용합니다. 다른 PC에서는 `BROWSER_EXECUTABLE`을 실제 Chrome 설치 경로에 맞추세요. Playwright도 개발 의존성으로 고정했습니다.
-
-- 단위 검증: Markdown/MDX 공통 규칙, 누락 필드·잘못된 형식, 실제 날짜, 중복 주소, 폴더명, 누락 이미지·대체 텍스트·MDX import/문법.
-- 통합 검증: `.local/build-acceptance`에 소스와 의존성을 복사하고 임시 글을 생성하여 같은 최종 빌드를 실행합니다. 실제 글 폴더나 샘플의 draft 값을 변경하지 않습니다. 별도 서버/저장소를 사용하는 기능이 아니라 로컬 테스트용 정적 서버입니다.
-- 공개 글 0개와 공개 Markdown/MDX 글, 제목/요약/본문 고유 단어, 한국어 기술 용어·영문 식별자, C++/C#, 빈 결과·초안/샘플/공통 UI 제외를 실제 검색 화면에서 검사합니다.
-- 모바일/데스크톱 × 밝은/어두운 테마에서 메뉴 키보드 조작·태그 탐색·직접 상세와 새로고침·코드 복사·목차·이미지·가로 스크롤을 검사합니다.
-- 잘못된 내부 링크와 검색 생성 실패가 빌드를 실패시키고 dist를 남기지 않는지, 공개 글을 제거한 후 이전 HTML/검색 잔재가 사라지는지 확인합니다.
-- `BLOG_BASE=/test-blog/` 구성에서 최종 검증과 실제 검색 결과 링크·상세 새로고침·이미지를 검사합니다.
-
-로그·검색어/기대/실제 결과·스크린샷은 `.local/final-review/`에 생성하며 Git에서 제외합니다. 검증용 공개 글이 들어 있는 임시 산출물은 실제 배포할 `dist`와 다릅니다. 실제 작업 폴더의 최종 결과물은 `npm run build`로 별도로 생성하세요.
-
-프로젝트 사이트 검증 예시:
-
-```powershell
-$env:BLOG_BASE='/repository-name/'
-& $nodeExe $npmCli run build
-& $nodeExe $npmCli run preview -- --port 4322
-# 확인 후 이 터미널에서 제거하고 실제 사용자 사이트 빌드를 다시 생성
-Remove-Item Env:BLOG_BASE
-& $nodeExe $npmCli run build
-```
-
-## 공개 배포와 이후 게시
-
-공개 주소는 https://seolryuhee.github.io/ 입니다. 2026-10-20 사용자의 공개 요청 후, 기존 main/루트의 legacy 게시를 **GitHub Actions 게시로 전환**하고 공개 배포와 실제 사이트 검증을 완료했습니다. 전환 직후 기존 사이트의 HTTP 200과 HTML 해시 유지도 확인했습니다.
-
-최초 공개 실행: [GitHub Actions 39404290240](https://github.com/seolryuhee/seolryuhee.github.io/actions/runs/39404290240). 업로드 artifact의 26개 파일과 공개 파일의 SHA-256이 모두 일치했습니다. 공개 글은 0개, 두 샘플은 draft:true입니다. 실제 사이트의 빈 목록·검색, 샘플 주소 404, RSS/사이트맵, 공유 이미지, 모바일 메뉴·화면을 확인했습니다. 공개 글 양성 검색과 본문 이미지는 별도 로컬 통합 검증 결과이며, 샘플을 공개해서 검사하지 않았습니다.
-
-워크플로 .github/workflows/pages.yml은 **수동 실행만** 지원합니다. publish 기본값은 false이며, true이고 main에서 실행했을 때만 deploy job이 동작합니다. 자동 push 배포는 켜지 않았습니다.
-
-새 글의 작성·이미지 추가·미리보기·게시 명령은 위의 1~7단계를 따릅니다. 현재 PC용 명령과 같은 PowerShell 창의 `$nodeExe`, `$npmCli` 변수를 사용합니다.
-
-CI는 npm ci → 단위 검증 → 공통 최종 빌드(콘텐츠 검증 → Astro → Pagefind → 결과물 검증) → 동일 dist 업로드 → 게시 순서입니다. 빌드와 검증 실패 시 업로드/배포하지 않습니다. Pages Source는 Actions로 유지하세요. 자동 배포 전환은 별도 요청 시에만 수행합니다.
-
-공개 검증은 scripts/verify-live.mjs로 재실행할 수 있습니다. 해당 실행의 github-pages artifact를 내려받아 artifact.tar를 로컬 폴더에 풀고, DEPLOY_ARTIFACT_DIR을 그 폴더로 지정한 뒤 npm run verify:live를 실행합니다. GitHub에서 생성한 실제 artifact와 비교해야 하며, 로컬에서 새로 빌드한 다른 결과물로 대체하지 않습니다. 필요하면 BROWSER_EXECUTABLE에 설치된 Chrome 경로를 지정합니다.
-
-검증 기록은 .local/deployment/live-report.json, Actions 로그와 공개 스크린샷에 생성하며 Git에서 제외합니다. 구현·공개 결과 요약은 [계획 문서](docs/PLAN.md)에 유지합니다.
-
-2026-10-20의 최초 공개 배포 기록은 위에 보존합니다. 2026-10-23 최종 원고와 사이트 이름·디자인 변경은 **사용자 공개 승인 완료** 상태이며, 빌드 공개 대상 1개·샘플 초안 2개입니다. 이번 실행의 게시 커밋·Actions·공개 파일 해시·실제 검색 검증 결과는 `.local/deployment/live-report.json`과 최종 작업 보고에서 확인합니다. 과거 공개 글 0개 검증은 현재 첫 글의 공개 검증을 대신하지 않습니다.
-
-## 유지보수
-
-소개 문구는 `src/pages/about.astro`, 사이트 공통 정보와 경로는 `src/lib/site.mjs`, 색상·폭·글꼴 크기는 `src/styles/global.css`에서 관리합니다. 평소 글 작성에는 이 파일들을 수정하지 않습니다. 소개 문구는 기존에 확인한 블로그 목적을 바탕으로 작성했으며 상세 프로필은 아직 없습니다.
-
-의존성 변경은 lockfile을 함께 반영하고 단위/최종 빌드/필요한 통합 검증을 실행합니다. 현재 Astro/MDX 조합의 `use astro:head-inject` 빌드 경고는 숨기지 않고 기록합니다. 실제 공개 MDX를 포함한 로컬 검증 결과는 계획 문서의 최신 실행 기록을 확인하세요. 광고·외부 댓글·방문자 추적은 포함하지 않습니다.
+상세 검증 명령, UTF-8 커밋 설정과 배포 확인 방법은 [개발 안내](docs/DEVELOPMENT.md)에 정리했습니다.

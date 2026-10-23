@@ -9,7 +9,7 @@
 - Astro 정적 출력, Markdown 및 필요한 글의 MDX, 직접 만든 레이아웃·CSS. 생성기 자체 개발 제외.
 - 홈·전체 글·상세·소개·태그·Pagefind 검색·RSS·사이트맵·기본 검색/공유 메타데이터 제공.
 - 별도 서버·저장소, 댓글, 시각 편집기, 분석 도구, 예약 발행 제외.
-- 버전은 공식 문서와 npm 정보 확인 후 lockfile로 고정. Astro 7.3.5, MDX 8.0.2, RSS 4.0.19, Pretendard 1.3.9, Pagefind 1.5.2. Node 22.23.3을 `.node-version`에 고정.
+- 버전은 공식 문서와 npm 정보 확인 후 lockfile로 고정. Astro 7.3.6, MDX 8.0.2, RSS 4.0.19, Pretendard 1.3.9, Pagefind 1.5.2. Node 22.23.3을 `.node-version`에 고정. Astro는 2026-10-23 head-inject 경고 해결을 위해 7.3.5에서 패치 갱신.
 
 ## 배포 통제: 확인 결과
 
@@ -170,6 +170,15 @@
 - 공개 검증 검색어: 한영키/해결기/히라가나/Korean IME Fix Mod → 첫 글, 없는검색어123/Optional/산책 → 결과 없음. 실제 Pages 검증은 해당 Actions 실행에서 받은 github-pages artifact와 모든 공개 파일의 SHA-256 비교를 포함. 로컬 dist를 CI artifact 대신 사용하지 않음.
 - 실행 증거는 `.local/release-review/`와 `.local/deployment/`에 보관하고 최종 보고에 게시 커밋·Actions 실행·실제 글/검색 결과를 기록. 이 소스 문서는 실제 공개 검증 전에 성공을 선기록하지 않음.
 - 게시 전 로컬 검증 완료: 콘텐츠 3개(공개 1개·초안 2개), 단위 9개, 최종 빌드 HTML 10개, 격리 통합 15개 그룹·16개 검색 시나리오 통과. 실제 배포용 dist를 정적 미리보기로 열어 1440/390/320px × light/dark의 6개 환경에서 최종 원고 29개 문단·7개 소제목·강조·목차·Steam 링크·세 태그·메뉴·테마·검색 42회·결과 클릭·새로고침·샘플 404 확인. 브라우저 오류 0건, 정적 서버 종료. 격리 메타데이터 저장 시 YAML 날짜가 Date로 해석되지 않도록 문자열 따옴표를 유지하며, 실제 글은 공개 상태 유지 확인.
+
+## MDX head-inject 빌드 경고 해결 (2026-10-23)
+
+- 원인 확인: 설치된 Astro 7.3.5의 `astro:content-asset-propagation` 플러그인이 MDX의 `?astroPropagatedAssets` 모듈 코드 첫 줄에 오래된 `"use astro:head-inject"` 지시문을 생성. 현재 자산 전파는 모듈 ID로 처리하지만 남아 있는 지시문에 Rolldown이 MODULE_LEVEL_DIRECTIVE 경고를 출력함. 실제 글의 문법 문제가 아님.
+- 공식 수정 [astro#18088](https://github.com/withastro/astro/pull/18088)과 [Astro 7.3.6 릴리스](https://github.com/withastro/astro/releases/tag/astro%407.3.6)를 확인하고 `astro`만 직접 의존성 7.3.6으로 고정 갱신. 해당 패치가 요구하는 전이 의존성 변경도 lockfile에 반영. MDX 8.0.2·Pagefind·Node 버전과 콘텐츠·레이아웃·배포 설정 유지. 경고 필터나 node_modules 수동 패치는 사용하지 않음.
+- 수정 전 빌드에서 경고 재현, 수정 후 설치 소스에서 지시문 제거 및 정식 빌드의 head-inject/MODULE_LEVEL_DIRECTIVE/[WARN] 부재 확인. 통합 검증의 성공 빌드 로그에 경고 재발 검사를 추가하고, 공개 MDX fixture가 import한 CSS의 실제 computed style을 검사하여 자산 전파 기능도 검증.
+- 로컬 정적 화면은 기존 공개 원고 29개 문단·7개 소제목·목차·태그·Steam 링크 및 1440/390/320px × light/dark의 6개 환경에서 검색 42회·결과 이동·새로고침 통과. 수정 전후 빌드·설치 로그, 의존성 변경 목록과 화면 검증 보고서는 `.local/head-inject-fix/`에 저장. 공개 배포는 새 커밋의 CI 경고 부재와 실제 artifact/공개 글·검색 검증으로 판정하며, 실행 결과를 최종 보고에 남김.
+- 단위 테스트 9개, 확장한 통합 검증 15개 그룹·16개 검색 시나리오 통과. 공개 MDX가 import한 CSS의 computed style이 데스크톱/모바일 × light/dark에서 모두 일치하며 성공 빌드 전체에서 head-inject 경고 부재 확인. 글·이미지·레이아웃·운영 콘텐츠 변경 없음.
+- 추가 사용자 요청 반영: 이전 게시 커밋의 메시지 바이트는 UTF-8이지만 전역 i18n.commitEncoding/logOutputEncoding=cp949가 적용되어 `encoding cp949` 헤더가 붙어 있었음. 이 저장소의 로컬 설정을 모두 utf-8로 명시하고 새 메시지는 UTF-8 파일에서 커밋하며 raw commit 바이트와 원격 메시지까지 대조. README는 블로그 소개·작성·실행·수동 배포 중심으로 다시 작성하고 PC별 설정·상세 검증·UTF-8 안내를 docs/DEVELOPMENT.md로 이동. 과거 작업 이력은 이 문서에 보존.
 
 ## 근거
 
