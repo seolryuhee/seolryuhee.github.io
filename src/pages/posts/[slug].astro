@@ -21,7 +21,7 @@ const toc = headings.filter(h => h.depth === 2 || h.depth === 3);
       </header>
       {toc.length > 0 && <details class="mobile-toc" data-pagefind-ignore><summary>이 글의 목차</summary><nav aria-label="글 목차">{toc.map(h => <a class:list={{ nested: h.depth === 3 }} href={`#${h.slug}`}>{h.text}</a>)}</nav></details>}
       <div class="prose"><Content /></div>
-      <div class="article-end" data-pagefind-ignore><span aria-hidden="true">✳</span><a href={urlFor('posts/')}>← 전체 글로 돌아가기</a></div>
+      <div class="article-end" data-pagefind-ignore><a href={urlFor('posts/')}>← 전체 글로 돌아가기</a></div>
     </article>
     {toc.length > 0 && <aside class="desktop-toc" data-pagefind-ignore><nav aria-label="글 목차"><p>이 글의 목차</p>{toc.map(h => <a class:list={{ nested: h.depth === 3 }} href={`#${h.slug}`}>{h.text}</a>)}</nav></aside>}
   </div>
