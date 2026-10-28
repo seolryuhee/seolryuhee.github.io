@@ -113,7 +113,7 @@ try {
     }
     await page.goto(absoluteUrl('search/'));
     if (published.length === 0) {
-      for (const query of ['없는검색어123', 'Optional', '산책']) {
+      for (const query of ['qzxvnomatchquery123', 'Optional', '산책']) {
         await page.locator('#search-input').fill(query);
         await page.getByRole('button', { name: '찾기', exact: true }).click();
         assert.match(await page.getByRole('status').textContent(), /아직 게시된 글이 없습니다/);
@@ -123,7 +123,7 @@ try {
       const firstRecord = published.find(post => post.data.slug === 'korean-ime-fix-mod');
       const cases = [
         ...(firstRecord ? ['한영키', '해결기', '히라가나', 'Korean IME Fix Mod'].map(query => ({ query, includes: firstRecord.data.slug })) : published.map(post => ({ query: post.data.title, includes: post.data.slug }))),
-        ...['없는검색어123', 'Optional', '산책'].map(query => ({ query, empty: true })),
+        ...['qzxvnomatchquery123', 'Optional', '산책'].map(query => ({ query, empty: true })),
       ];
       for (const test of cases) {
         await page.locator('#search-input').fill(test.query);
